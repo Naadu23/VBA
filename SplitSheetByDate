@@ -1,0 +1,41 @@
+Sub SplitSheetByDate()
+    Dim objWorksheet As Worksheet
+    Dim nLastRow, nRow, nNextRow As Integer
+    Dim dtColumnValue As Date
+    Dim objDictionary As Object
+    Dim varColumnValues As Variant
+    Dim objSheet As Worksheet
+    
+    Set objWorksheet = ActiveSheet 'Change this to your specific worksheet if needed
+    nLastRow = objWorksheet.Range("A" & objWorksheet.Rows.Count).End(xlUp).Row
+    Set objDictionary = CreateObject("Scripting.Dictionary")
+    
+    ' Loop through the data and add unique dates to the dictionary
+    For nRow = 2 To nLastRow ' Assuming your data starts from row 2
+        dtColumnValue = objWorksheet.Range("A" & nRow).Value ' Assuming dates are in column A
+        If Not objDictionary.exists(dtColumnValue) Then
+            objDictionary.Add dtColumnValue, 1
+        End If
+    Next nRow
+    
+    varColumnValues = objDictionary.Keys
+    
+    ' Loop through each unique date and create a new sheet for each date
+    For i = LBound(varColumnValues) To UBound(varColumnValues)
+        dtColumnValue = varColumnValues(i)
+        Set objSheet = Worksheets.Add(After:=Worksheets(Worksheets.Count))
+        objSheet.Name = Format(dtColumnValue, "yyyy-mm-dd") ' Set the sheet name to the formatted date
+        objWorksheet.Rows(1).EntireRow.Copy objSheet.Rows(1)
+        
+        ' Loop through the data and copy rows with matching dates to the new sheet
+        For nRow = 2 To nLastRow
+            If objWorksheet.Range("A" & nRow).Value = dtColumnValue Then
+                objWorksheet.Rows(nRow).EntireRow.Copy
+                nNextRow = objSheet.Range("A" & objSheet.Rows.Count).End(xlUp).Row + 1
+                objSheet.Range("A" & nNextRow).PasteSpecial xlPasteValuesAndNumberFormats
+            End If
+        Next nRow
+        
+        objSheet.Columns("A:AD").AutoFit
+    Next i
+End Sub
